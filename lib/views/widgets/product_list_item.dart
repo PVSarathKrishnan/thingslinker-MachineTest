@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:thingslinker/utils/constants.dart';
+import 'package:thingslinker/views/widgets/best_seller_list.dart';
 
 class ProductListItem extends StatelessWidget {
   final String title;
@@ -20,7 +21,7 @@ class ProductListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Truncate the title text
+    // Truncate the title 
     String shortenedTitle = truncateText(title, maxTitleLength);
 
     return Stack(
@@ -36,7 +37,7 @@ class ProductListItem extends StatelessWidget {
                   color: Colors.black.withOpacity(0.1),
                   spreadRadius: 1,
                   blurRadius: 2,
-                  offset: Offset(0, 1), // changes position of shadow
+                  offset: Offset(0, 1), 
                 ),
               ],
             ),
@@ -70,27 +71,12 @@ class ProductListItem extends StatelessWidget {
                 ],
               ),
               onTap: () {
-                // Handle item tap
+                //  item tap 
               },
             ),
           ),
         ),
-        Positioned(
-          left: 310,
-          top: 10,
-          child: Container(
-            decoration: BoxDecoration(
-                color: Colors.black.withOpacity(.7),
-                borderRadius: BorderRadius.circular(8)),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8),
-              child: Text(
-                "Best Seller",
-                style: textNormal.copyWith(fontSize: 10, color: Colors.white),
-              ),
-            ),
-          ),
-        )
+        BestSellerListWidget()
       ],
     );
   }

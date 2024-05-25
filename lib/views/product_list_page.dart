@@ -1,10 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:thingslinker/repository/api_repository.dart';
+import 'package:thingslinker/views/widgets/category_text.dart';
 import 'package:thingslinker/views/widgets/product_grid_item.dart';
 import 'package:thingslinker/views/widgets/product_list_item.dart';
 import 'package:thingslinker/views/widgets/search_bar.dart';
 import 'package:thingslinker/utils/constants.dart';
+
+enum SortOptions { popularity, newest, priceHighToLow, priceLowToHigh }
 
 class ProductListPage extends StatefulWidget {
   const ProductListPage({Key? key}) : super(key: key);
@@ -19,12 +22,58 @@ class _ProductListPageState extends State<ProductListPage> {
   late Future<List<dynamic>> futureProducts;
   int selectedIndex = -1;
   bool showGridView = true;
+  SortOptions _selectedSortOption = SortOptions.popularity;
 
   @override
   void initState() {
     super.initState();
     futureCategories = ApiRepository().fetchUniqueCategories();
     futureProducts = ApiRepository().fetchProducts();
+  }
+
+  void _sortProducts(List<dynamic> products) {
+    switch (_selectedSortOption) {
+      case SortOptions.popularity:
+        products.sort((a, b) =>
+            (b['reviews']?.length ?? 0).compareTo(a['reviews']?.length ?? 0));
+        break;
+      case SortOptions.newest:
+        products.sort((a, b) => DateTime.parse(b['meta']['createdAt'])
+            .compareTo(DateTime.parse(a['meta']['createdAt'])));
+        break;
+      case SortOptions.priceHighToLow:
+        products.sort((a, b) => b['price'].compareTo(a['price']));
+        break;
+      case SortOptions.priceLowToHigh:
+        products.sort((a, b) => a['price'].compareTo(b['price']));
+        break;
+    }
+  }
+
+  PopupMenuEntry<SortOptions> _buildPopupMenuItem(
+      SortOptions option, String text) {
+    return PopupMenuItem<SortOptions>(
+      value: option,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(text),
+          Icon(
+            Icons.circle,
+            size: _selectedSortOption == option ? 10 : 12,
+            color: _selectedSortOption == option ? Colors.black : Colors.white,
+            shadows: _selectedSortOption == option
+                ? []
+                : [
+                    Shadow(
+                      blurRadius: 2,
+                      color: Colors.black26,
+                    ),
+                  ],
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -61,30 +110,37 @@ class _ProductListPageState extends State<ProductListPage> {
                         color: gr,
                         borderRadius: BorderRadius.circular(50),
                       ),
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.tune,
-                          color: Colors.black54,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8,vertical:  4.0),
+                        child: PopupMenuButton<SortOptions>(
+                          color: Colors.white,
+                          icon: Icon(
+                            Icons.tune,
+                            color: Colors.black54,
+                          ),
+                          onSelected: (SortOptions result) {
+                            setState(() {
+                              _selectedSortOption = result;
+                            });
+                          },
+                          itemBuilder: (BuildContext context) =>
+                              <PopupMenuEntry<SortOptions>>[
+                            _buildPopupMenuItem(
+                                SortOptions.popularity, 'Popularity'),
+                            _buildPopupMenuItem(SortOptions.newest, 'Newest'),
+                            _buildPopupMenuItem(
+                                SortOptions.priceHighToLow, 'Price: High to Low'),
+                            _buildPopupMenuItem(
+                                SortOptions.priceLowToHigh, 'Price: Low to High'),
+                          ],
                         ),
-                        onPressed: () {
-                          //func
-                        },
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 6,
-                horizontal: 15,
-              ),
-              child: Text(
-                "Category",
-                style: textHeading,
-              ),
-            ),
+            CategoryText(),
             SizedBox(
               height: 40.0,
               child: FutureBuilder<List<String>>(
@@ -166,6 +222,9 @@ class _ProductListPageState extends State<ProductListPage> {
                                 product['category'] == currentCategory)
                             .toList();
                       }
+
+                      _sortProducts(filteredProducts);
+
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

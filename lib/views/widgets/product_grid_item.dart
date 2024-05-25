@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:thingslinker/utils/constants.dart';
+import 'package:thingslinker/views/widgets/best_seller_grid.dart';
 
 class ProductGridItem extends StatelessWidget {
   final String title;
@@ -81,22 +82,7 @@ class ProductGridItem extends StatelessWidget {
             ),
           ),
         ),
-        Positioned(
-          left: 115,
-          top: 5,
-          child: Container(
-            decoration: BoxDecoration(
-                color: Colors.black.withOpacity(.7),
-                borderRadius: BorderRadius.circular(8)),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8),
-              child: Text(
-                "Best Seller",
-                style: textNormal.copyWith(fontSize: 10, color: Colors.white),
-              ),
-            ),
-          ),
-        )
+        BestSellerGridWidget()
       ],
     );
   }

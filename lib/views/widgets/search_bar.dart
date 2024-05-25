@@ -14,15 +14,13 @@ class SearchBarWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: searchController,
-
       decoration: InputDecoration(
-        filled: true, // set this to true to fill the TextField with color
-        fillColor: gr, // light grey color similar to the image
-        contentPadding:
-            const EdgeInsets.all(16.0), // padding around the text field content
+        filled: true,
+        fillColor: gr,
+        contentPadding: const EdgeInsets.all(16.0),
         border: OutlineInputBorder(
           borderSide: BorderSide.none,
-          borderRadius: BorderRadius.circular(30.0), // set rounded corners
+          borderRadius: BorderRadius.circular(30.0),
         ),
         prefixIcon: const Padding(
           padding: EdgeInsets.all(12.0),
@@ -41,8 +39,7 @@ class SearchBarWidget extends StatelessWidget {
           ),
         ),
         hintText: 'Search...',
-        hintStyle: textNormal.copyWith(
-            color: Colors.black45), // set the hint text color
+        hintStyle: textNormal.copyWith(color: Colors.black45),
       ),
     );
   }
