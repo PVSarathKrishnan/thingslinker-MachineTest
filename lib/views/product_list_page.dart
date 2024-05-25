@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:thingslinker/repository/api_repository.dart';
 import 'package:thingslinker/views/widgets/category_text.dart';
@@ -24,6 +24,23 @@ class _ProductListPageState extends State<ProductListPage> {
   bool showGridView = true;
   SortOptions _selectedSortOption = SortOptions.popularity;
 
+  String _searchQuery = ''; // Stores the current search query
+  Timer? _debounce; // Timer for debounce functionality
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  /// Filters the list of products based on the search query
+  List<dynamic> _filterProducts(List<dynamic> products, String query) {
+    return products
+        .where((product) =>
+            product['title'].toLowerCase().contains(query.toLowerCase()))
+        .toList();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -31,6 +48,7 @@ class _ProductListPageState extends State<ProductListPage> {
     futureProducts = ApiRepository().fetchProducts();
   }
 
+  /// Sorts the products based on the selected sort option
   void _sortProducts(List<dynamic> products) {
     switch (_selectedSortOption) {
       case SortOptions.popularity:
@@ -50,6 +68,7 @@ class _ProductListPageState extends State<ProductListPage> {
     }
   }
 
+  /// Builds popup menu items for sorting options
   PopupMenuEntry<SortOptions> _buildPopupMenuItem(
       SortOptions option, String text) {
     return PopupMenuItem<SortOptions>(
@@ -95,7 +114,29 @@ class _ProductListPageState extends State<ProductListPage> {
                       horizontal: 10,
                       vertical: 25,
                     ),
-                    child: SearchBarWidget(searchController: searchController),
+                    child: FutureBuilder<List<dynamic>>(
+                      future: futureProducts,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        } else if (snapshot.hasError) {
+                          return Text("Error: ${snapshot.error}");
+                        } else if (!snapshot.hasData) {
+                          return Text("No data available");
+                        } else {
+                          List<String> productTitles = snapshot.data!
+                              .map<String>(
+                                  (product) => product['title'].toString())
+                              .toList();
+                          return SearchBarWidget(
+                            searchController: searchController,
+                            onSearchChanged: _onSearchChanged,
+                            suggestions: productTitles,
+                          );
+                        }
+                      },
+                    ),
                   ),
                 ),
                 Padding(
@@ -111,7 +152,8 @@ class _ProductListPageState extends State<ProductListPage> {
                         borderRadius: BorderRadius.circular(50),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8,vertical:  4.0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4.0),
                         child: PopupMenuButton<SortOptions>(
                           color: Colors.white,
                           icon: Icon(
@@ -128,10 +170,10 @@ class _ProductListPageState extends State<ProductListPage> {
                             _buildPopupMenuItem(
                                 SortOptions.popularity, 'Popularity'),
                             _buildPopupMenuItem(SortOptions.newest, 'Newest'),
-                            _buildPopupMenuItem(
-                                SortOptions.priceHighToLow, 'Price: High to Low'),
-                            _buildPopupMenuItem(
-                                SortOptions.priceLowToHigh, 'Price: Low to High'),
+                            _buildPopupMenuItem(SortOptions.priceHighToLow,
+                                'Price: High to Low'),
+                            _buildPopupMenuItem(SortOptions.priceLowToHigh,
+                                'Price: Low to High'),
                           ],
                         ),
                       ),
@@ -213,18 +255,21 @@ class _ProductListPageState extends State<ProductListPage> {
                       List<dynamic> filteredProducts;
                       String currentCategory;
                       if (selectedIndex == -1) {
-                        filteredProducts = productSnapshot.data!;
+                        filteredProducts = _filterProducts(
+                            productSnapshot.data!, _searchQuery);
                         currentCategory = 'All Items';
                       } else {
                         currentCategory = categorySnapshot.data![selectedIndex];
-                        filteredProducts = productSnapshot.data!
-                            .where((product) =>
-                                product['category'] == currentCategory)
-                            .toList();
+                        filteredProducts = _filterProducts(
+                          productSnapshot.data!
+                              .where((product) =>
+                                  product['category'] == currentCategory)
+                              .toList(),
+                          _searchQuery,
+                        );
                       }
 
                       _sortProducts(filteredProducts);
-
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -319,5 +364,17 @@ class _ProductListPageState extends State<ProductListPage> {
         ),
       ),
     );
+  }
+
+  /// Handles the search query change with debounce
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel(); // Cancel previous timer if active
+    _debounce = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted) {
+        setState(() {
+          _searchQuery = query; // Update search query
+        });
+      }
+    });
   }
 }
